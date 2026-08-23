@@ -51,3 +51,22 @@ async def debug_client(request: Request):
         "x_forwarded_for": request.headers.get("x-forwarded-for"),
         "x_real_ip": request.headers.get("x-real-ip"),
     }
+
+
+@app.get("/debug/limiter")
+async def debug_limiter():
+    from app.middleware import _get_limiter
+
+    results = []
+    try:
+        limiter = _get_limiter()
+        for i in range(25):
+            try:
+                allowed = await limiter.is_allowed("debug-fixed-key")
+                results.append(allowed)
+            except Exception as e:
+                results.append(f"ERROR: {type(e).__name__}: {e}")
+    except Exception as e:
+        return {"build_error": f"{type(e).__name__}: {e}"}
+
+    return {"limiter_class": type(limiter).__name__, "results": results}
