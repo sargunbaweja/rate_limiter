@@ -29,3 +29,15 @@ async def health_check():
 @app.get("/search")
 async def search(q: str = ""):
     return {"query": q, "results": []}
+
+
+@app.get("/debug/settings")
+async def debug_settings():
+    settings = get_settings()
+    return {
+        "rate_limit_algo": settings.rate_limit_algo,
+        "rate_limit_limit": settings.rate_limit_limit,
+        "rate_limit_window_seconds": settings.rate_limit_window_seconds,
+        "rate_limit_capacity": settings.rate_limit_capacity,
+        "rate_limit_refill_rate": settings.rate_limit_refill_rate,
+    }
