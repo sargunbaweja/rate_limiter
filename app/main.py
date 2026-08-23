@@ -2,7 +2,7 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 
 from app.config import get_settings
 from app.middleware import RateLimiterMiddleware
@@ -29,44 +29,3 @@ async def health_check():
 @app.get("/search")
 async def search(q: str = ""):
     return {"query": q, "results": []}
-
-
-@app.get("/debug/settings")
-async def debug_settings():
-    settings = get_settings()
-    return {
-        "rate_limit_algo": settings.rate_limit_algo,
-        "rate_limit_limit": settings.rate_limit_limit,
-        "rate_limit_window_seconds": settings.rate_limit_window_seconds,
-        "rate_limit_capacity": settings.rate_limit_capacity,
-        "rate_limit_refill_rate": settings.rate_limit_refill_rate,
-    }
-
-
-@app.get("/debug/client")
-async def debug_client(request: Request):
-    return {
-        "client_host": request.client.host if request.client else None,
-        "client_port": request.client.port if request.client else None,
-        "x_forwarded_for": request.headers.get("x-forwarded-for"),
-        "x_real_ip": request.headers.get("x-real-ip"),
-    }
-
-
-@app.get("/debug/limiter")
-async def debug_limiter():
-    from app.middleware import _get_limiter
-
-    results = []
-    try:
-        limiter = _get_limiter()
-        for i in range(25):
-            try:
-                allowed = await limiter.is_allowed("debug-fixed-key")
-                results.append(allowed)
-            except Exception as e:
-                results.append(f"ERROR: {type(e).__name__}: {e}")
-    except Exception as e:
-        return {"build_error": f"{type(e).__name__}: {e}"}
-
-    return {"limiter_class": type(limiter).__name__, "results": results}

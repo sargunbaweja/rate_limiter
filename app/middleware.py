@@ -47,6 +47,14 @@ def _get_client_key(request: Request) -> str:
     if api_key:
         return f"key:{api_key}"
 
+    # Behind a reverse proxy (Railway, Render, nginx, etc.) request.client.host
+    # is the proxy's own internal address, not the real caller - it can even
+    # change from one request to the next. The real client IP is forwarded in
+    # this header instead, as the first (leftmost) address in the list.
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return f"ip:{forwarded_for.split(',')[0].strip()}"
+
     if request.client:
         return f"ip:{request.client.host}"
 
