@@ -2,7 +2,7 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from app.config import get_settings
 from app.middleware import RateLimiterMiddleware
@@ -40,4 +40,14 @@ async def debug_settings():
         "rate_limit_window_seconds": settings.rate_limit_window_seconds,
         "rate_limit_capacity": settings.rate_limit_capacity,
         "rate_limit_refill_rate": settings.rate_limit_refill_rate,
+    }
+
+
+@app.get("/debug/client")
+async def debug_client(request: Request):
+    return {
+        "client_host": request.client.host if request.client else None,
+        "client_port": request.client.port if request.client else None,
+        "x_forwarded_for": request.headers.get("x-forwarded-for"),
+        "x_real_ip": request.headers.get("x-real-ip"),
     }
